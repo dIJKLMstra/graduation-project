@@ -1,6 +1,8 @@
 '''
-    @author Qi Sun
-    @desc Obtain features of trees similarities
+    @Author Qi Sun
+    @Desc Obtain features of trees similarities
+    @command example
+    python PT_features.py segment_by_word_file segment_by_sentence_file feature_vector_file
 '''
 
 import os
@@ -8,6 +10,7 @@ import re
 import sys
 
 from nltk.tree import ParentedTree
+from tree import *
 
 re_pattern = "[^A-Z()]"
 
@@ -35,27 +38,45 @@ def LCS(str1, str2, str3):
 
 
 def find_simi(tree_list):
-
+    '''
+        find largest tree kernel between sentences
+    '''
     subtree_cnt = len(tree_list)
     if subtree_cnt < 3:
         return 0
 
-    tree_list = [re.sub(re_pattern, '', tree_str)[:-1]\
-                 for tree_str in tree_list]
+    # tree_list = [re.sub(re_pattern, '', tree_str)[:-1]\
+    #              for tree_str in tree_list]
 
-    lcs_result = 0
-    for i in range(subtree_cnt - 2):
-        lcs = LCS(tree_list[i], tree_list[i+1], tree_list[i+2])
-        lcs = lcs/ max(len(tree_list[i]), \
-            len(tree_list[i+1]), len(tree_list[i+2]))
-        if lcs > lcs_result:
-            lcs_result = lcs
+    # lcs_result = 0
+    # for i in range(subtree_cnt - 2):
+    #     lcs = LCS(tree_list[i], tree_list[i+1], tree_list[i+2])
+    #     lcs = lcs/ max(len(tree_list[i]), \
+    #         len(tree_list[i+1]), len(tree_list[i+2]))
+    #     if lcs > lcs_result:
+    #         lcs_result = lcs
 
-    return lcs_result
+    tk_result = 0
+    for diff in range(1, int(subtree_cnt/2) + 1):
+        for first_id in range(0, subtree_cnt - 2*diff):
+            tnlist1 = tree_bfs(tree_list[first_id])
+            tnlist2 = tree_bfs(tree_list[first_id+diff])
+            tnlist3 = tree_bfs(tree_list[first_id+2*diff])
+            tk1 = cal_treeKernel(tnlist1, tnlist2)
+            tk2 = cal_treeKernel(tnlist2, tnlist3)
+            tk3 = cal_treeKernel(tnlist3, tnlist1)
+            tmp_result = tk1 + tk2 + tk3
+            if tmp_result > tk_result:
+                tk_result = tmp_result
+
+    return tk_result
 
 
 def traverse(t):
-
+    '''
+        traverse a whole sentence tree and calculate 
+        the ratio of same subtrees in the whole sentence tree
+    '''
     subtree_dict = {}
 
     for subtree in t.subtrees(filter=lambda x: x.label() != 'PU'):
@@ -98,19 +119,18 @@ def main():
     with open(writePath, 'w') as writeF:
         for sent in seg_sent_lines:
             if sent == '( (PRN (PU 。)) )\n':
-                lcs = find_simi(tmp_list)
+                tk = find_simi(tmp_list)
+                print(tk)
                 tree = ParentedTree.fromstring(\
                     seg_word_lines[idx][:-1])
-                print(lcs)
                 vec = traverse(tree)
-                #tree.draw()
-                vec = [str(lcs)] + [str(v) for v in vec]
-                writeF.write('\t'.join(vec) + '\t1\n')
-
+                vec = [str(tk)] + [str(v) for v in vec]
+                writeF.write('\t'.join(vec) + '\t0\n')
                 tmp_list = []
                 idx += 1
             else:
-                tmp_list.append(sent)
+                tree = ParentedTree.fromstring(sent[:-1])
+                tmp_list.append(tree)
 
 
 if __name__ == "__main__":

@@ -117,8 +117,8 @@ def cal_treeKernel(tnlist1, tnlist2):
 	return tree_kernel
 
 if __name__ == "__main__":
-	t1 = Tree.fromstring("(S (NP (D the) (N dog)) (VP (V chased)(NP (D the) (N cat))))")
-	t2 = Tree.fromstring("(S (NP (D the)) (VP (V chased)(NP (D the))))")
+	t1 = Tree.fromstring("( (IP (NP (NN Éú»î)) (VP (VP (VV »î)) (VP (ADVP (AD ¸ü)) (VP (VA ÃÀºÃ))))) )")
+	t2 = Tree.fromstring("( (IP (NP (NN ×æ¹ú)) (VP (ADVP (AD ¸ü)) (VP (VA ¸»Ç¿)))) )")
 	#t1 = Tree.fromstring("(S (NP (D the)) (VP (V chased)))")
 	#t2 = Tree.fromstring("(S (NP (D the)) (VP (V chased)))")
 	tnlist1 = tree_bfs(t1)

@@ -41,6 +41,7 @@ def find_simi(tree_list):
     '''
         find largest tree kernel between sentences
     '''
+    
     subtree_cnt = len(tree_list)
     if subtree_cnt < 3:
         return 0
@@ -118,19 +119,30 @@ def main():
     tmp_list = []
     with open(writePath, 'w') as writeF:
         for sent in seg_sent_lines:
-            if sent == '( (PRN (PU 。)) )\n':
-                tk = find_simi(tmp_list)
-                print(tk)
-                tree = ParentedTree.fromstring(\
-                    seg_word_lines[idx][:-1])
-                vec = traverse(tree)
-                vec = [str(tk)] + [str(v) for v in vec]
-                writeF.write('\t'.join(vec) + '\t0\n')
-                tmp_list = []
-                idx += 1
+            if sent == '( (NP (NT 0)) )\n' or sent == '( (QP (CD 1)) )\n':
+                try:
+                    tree = ParentedTree.fromstring(\
+                        seg_word_lines[idx][:-1])
+                except Exception:
+                    tmp_list = []
+                    idx += 1
+                else:
+                    tk = find_simi(tmp_list)
+                    vec = traverse(tree)
+                    vec = [str(tk)] + [str(v) for v in vec]
+                    writeF.write('\t'.join(vec))
+                    if sent == '( (NP (NT 0)) )\n':
+                        writeF.write('\t0\n')
+                    else:
+                        writeF.write('\t1\n')
+                    tmp_list = []
+                    idx += 1
             else:
-                tree = ParentedTree.fromstring(sent[:-1])
-                tmp_list.append(tree)
+                try:
+                    tree = ParentedTree.fromstring(sent[:-1])
+                    tmp_list.append(tree)
+                except Exception:
+                    pass
 
 
 if __name__ == "__main__":

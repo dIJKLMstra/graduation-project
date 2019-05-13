@@ -98,7 +98,7 @@ def filter_neg_paral_samples():
 				negCnt += 1
 			cur_idx += step
 			
-def seperate_paral_train_test_set():
+def seperate_paral_dataset():
 	'''
 		we will get our final parallelism dataset
 		and then divide it into training set and test set
@@ -121,7 +121,7 @@ def seperate_paral_train_test_set():
 	
 	random.shuffle(dataset)
 
-	print(len(dataset))
+	#print(len(dataset))
 	trainCnt = int(len(dataset) * 0.9)
 	trainset = dataset[:trainCnt]
 	testset = dataset[trainCnt:]
@@ -134,5 +134,67 @@ def seperate_paral_train_test_set():
 		for test in testset:
 			writeF2.write(test)
 
+def get_dual_annotation():
+	'''
+		we try to get annotation dual sentences
+	'''
+
+	sent_re = '。|！|\.|？|\?|\!'
+	clause_re = '，|；|、|,|;'
+	readPath = '../data/literary/webDual.txt'
+	writePath = '../data/literary/dualAnnoation3.csv'
+
+	with open(readPath, 'r', encoding='utf-8') as readF:
+		lines = readF.readlines()
+
+	with open(writePath, 'w', encoding='utf-8') as writeF:
+		for line in lines:
+			if line != '\n':
+				sents = re.split(sent_re, line[:-1].strip())
+				for sent in sents:
+					clauses = re.split(clause_re, sent)
+					clauseCnt = len(clauses)
+					# dual sentence need two clauses 
+					# has same number of words
+					if clauseCnt % 2 == 0:
+						clauseLen1 = 0
+						clauseLen2 = 0
+						for idx in range(int(clauseCnt/2)):
+							clauseLen1 += len(clauses[idx])
+						for idx in range(int(clauseCnt/2), clauseCnt):
+							clauseLen2 += len(clauses[idx])
+						if clauseLen1 == clauseLen2:
+							writeF.write(sent + '\n')
+						
+def seperate_dual_dataset():
+	'''
+		we will get our final dual dataset
+		and then divide it into training set and test set
+	'''
+
+	readPath = '../data/literary/dualAnnoation.txt'
+	trainset_path = '../data/dataset/dual_train.tsv'
+	testset_path = '../data/dataset/dual_test.tsv'
+
+	with open(readPath, 'r', encoding='utf-8') as readF:
+		lines = readF.readlines()
+
+	dataset = [line for line in lines if line.split('\t')[1] != 'B\n']
+
+	random.shuffle(dataset)
+
+	trainCnt = int(len(dataset) * 0.9)
+	trainset = dataset[:trainCnt]
+	testset = dataset[trainCnt:]
+
+	with open(trainset_path, 'w', encoding='utf-8') as writeF1:
+		for train in trainset:
+			writeF1.write(train)
+
+	with open(testset_path, 'w', encoding='utf-8') as writeF2:
+		for test in testset:
+			writeF2.write(test)
+
+
 if __name__ == "__main__":
-	seperate_paral_train_test_set()
+	seperate_dual_dataset()

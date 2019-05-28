@@ -6,6 +6,8 @@
 import os
 import re
 import random
+import thulac
+import jieba.posseg as psg
 
 def collect_neg_samples():
 	'''
@@ -173,9 +175,9 @@ def seperate_dual_dataset():
 	'''
 
 	readPath = '../data/literary/dualAnnoation.txt'
-	trainset_path = '../data/dataset/dual_train.tsv'
-	testset_path = '../data/dataset/dual_test.tsv'
-
+	trainPath = '../data/dataset/dual_train2.tsv'
+	devsetPath = '../data/dataset/dual_dev2.tsv'
+	testsetPath = '../data/dataset/dual_test2.tsv'
 	with open(readPath, 'r', encoding='utf-8') as readF:
 		lines = readF.readlines()
 
@@ -183,18 +185,73 @@ def seperate_dual_dataset():
 
 	random.shuffle(dataset)
 
-	trainCnt = int(len(dataset) * 0.9)
+	trainCnt = int(len(dataset) * 0.8)
+	devCnt = int(len(dataset) * 0.9)
 	trainset = dataset[:trainCnt]
-	testset = dataset[trainCnt:]
+	devset = dataset[trainCnt:devCnt]
+	testset = dataset[devCnt:]
 
-	with open(trainset_path, 'w', encoding='utf-8') as writeF1:
+	with open(trainPath, 'w', encoding='utf-8') as writeF1:
 		for train in trainset:
 			writeF1.write(train)
 
-	with open(testset_path, 'w', encoding='utf-8') as writeF2:
+	with open(devsetPath, 'w', encoding='utf-8') as writeF2:
+		for dev in devset:
+			writeF2.write(dev)
+
+	with open(testsetPath, 'w', encoding='utf-8') as writeF3:
 		for test in testset:
-			writeF2.write(test)
+			writeF3.write(test)
 
+def get_dual_POS_tagging():
+	'''
+		get each word of dual sentences' pos tagging
+	'''
 
+	readPath = '../data/processing_data/dual_test_divided2.tsv'
+	writePath = '../data/processing_data/dual_test_POS.txt'
+
+	with open(readPath, 'r', encoding='utf-8') as readF:
+		lines = readF.readlines()
+
+	#lines = trainLines + devLines
+	with open(writePath, 'w', encoding='utf-8') as writeF:
+		#thu = thulac.thulac()
+		for line in lines:
+			info = line.split('\t')
+			for clause in [info[0], info[1]]:
+				#wordpos = thu.cut(word)
+				#writeF.write(wordpos[0][1] + '\t')
+				for word in clause:
+					for wordcut in psg.cut(word):
+						writeF.write(wordcut.flag[0])
+				writeF.write('\t')
+			writeF.write(info[-1])
+
+def divide_dual_sentence():
+	'''
+		divide each sentence in dual dataset into two parts
+		first clause and second clause
+	'''
+
+	clause_re = '，|；|、|,|;'
+	readPath = '../data/dataset/dual_test2.tsv'
+	writePath = '../data/processing_data/dual_test_divided2.tsv'
+
+	with open(readPath, 'r', encoding='utf-8') as readF:
+		lines = readF.readlines()
+
+	with open(writePath, 'w', encoding='utf-8') as writeF:
+		for line in lines:
+			info = line.split('\t')
+			clauses = re.split(clause_re, info[0])
+			clausesCnt = len(clauses)
+			clause1 = ''.join([clause for \
+				clause in clauses[:int(clausesCnt/2)]])
+			clause2 = ''.join([clause \
+				for clause in clauses[int(clausesCnt/2):]])
+			writeF.write(clause1 + '\t' + clause2 + '\t' + info[1])
+
+			
 if __name__ == "__main__":
-	seperate_dual_dataset()
+	get_dual_POS_tagging()
